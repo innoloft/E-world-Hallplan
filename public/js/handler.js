@@ -6,29 +6,23 @@ InforoMap.on("app/ready", function (e) {
   // InforoMap.initFavorites(favorites);
 });
 
-InforoMap.on("feature/marker-click", function (e) {
-  const exhibitor = e.exhibitorId;
-  if (favorites.includes(exhibitor)) {
-    removeFavorites(exhibitor);
-  } else {
-    addFavorites(exhibitor);
-  }
-});
-
 const addFavorites = (exhibitorId) => {
+  console.log("addFavorites", exhibitorId);
   if (!token) {
     return;
   }
-  console.log("addFavorites", exhibitorId);
 
   //todo api call to loftos API to add exhibitor to favorites
 };
 
 const removeFavorites = (exhibitorId) => {
+  console.log("removeFavorites", exhibitorId);
   if (!token) {
     return;
   }
-  console.log("removeFavorites", exhibitorId);
 
   //todo api call to loftos API to remove exhibitor from favorites
 };
+
+window.addFavorites = addFavorites;
+window.removeFavorites = removeFavorites;
