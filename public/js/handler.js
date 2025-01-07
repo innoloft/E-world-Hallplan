@@ -19,6 +19,7 @@ const addFavorites = (exhibitorId) => {
   if (!token) {
     return;
   }
+  console.log("addFavorites", exhibitorId);
 
   //todo api call to loftos API to add exhibitor to favorites
 };
@@ -27,6 +28,7 @@ const removeFavorites = (exhibitorId) => {
   if (!token) {
     return;
   }
+  console.log("removeFavorites", exhibitorId);
 
   //todo api call to loftos API to remove exhibitor from favorites
 };
