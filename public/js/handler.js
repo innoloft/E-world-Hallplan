@@ -12,11 +12,15 @@ const watchlistName = "Hallenplan (2025 - automatisch erstellt)";
 const token = urlParams.get("token");
 
 let watchlistId = null;
+let favorites = [];
 
 InforoMap.on("app/ready", async function (e) {
   watchlistId = await getHallplanWatchlistId();
-  let favorites = await getFavorites(watchlistId);
-  // InforoMap.initFavorites(favorites);
+  favorites = await getFavorites(watchlistId);
+  const favoritesEntryIds = favorites
+    .filter((entry) => entry.entity.type === "organization")
+    .map((entry) => entry.entity.id);
+  InforoMap.initFavorites(favoritesEntryIds);
 });
 
 const getHallplanWatchlistId = async () => {
@@ -40,7 +44,7 @@ const getHallplanWatchlistId = async () => {
     return null;
   }
 
-  // create watchlist with "hallenplan" name
+  // create watchlist if it doesn't exist
   try {
     const response = await fetch(API_URL + "/watchlists", {
       method: "POST",
@@ -78,9 +82,7 @@ const getFavorites = async (watchlistId) => {
     );
     const data = await response.json();
     checkExpired(data);
-    favorites = data
-      .filter((entry) => entry.entity.type === "organization")
-      .map((entry) => entry.entity.id);
+    favorites = data;
   } catch (error) {
     console.error("Error fetching watchlist entries:", error);
   }
@@ -89,6 +91,7 @@ const getFavorites = async (watchlistId) => {
 };
 
 const addFavorites = async (exhibitorId) => {
+  const object = { entity: { id: exhibitorId, type: "organization" } };
   try {
     const response = await fetch(
       API_URL + `/watchlists/${watchlistId}/entries`,
@@ -99,25 +102,34 @@ const addFavorites = async (exhibitorId) => {
           appId: APP_ID,
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          entity: {
-            id: exhibitorId,
-            type: "organization",
-          },
-        }),
+        body: JSON.stringify(object),
       }
     );
     const data = await response.json();
     checkExpired(data);
+    object.id = data.id;
+    if (!favorites.find((entry) => entry.entity.id === object.entity.id)) {
+      favorites.push(object);
+    }
   } catch (error) {
     console.error("Error adding exhibitor to watchlist:", error);
   }
 };
 
 const removeFavorites = async (exhibitorId) => {
+  const entry = favorites.find(
+    (entry) =>
+      entry.entity.id === exhibitorId && entry.entity.type === "organization"
+  );
+  if (!entry) {
+    return;
+  }
+
+  const entryId = entry.id;
+
   try {
     const response = await fetch(
-      API_URL + `/watchlists/${watchlistId}/entries/${exhibitorId}`,
+      API_URL + `/watchlists/${watchlistId}/entries/${entryId}`,
       {
         method: "DELETE",
         headers: {
@@ -127,6 +139,11 @@ const removeFavorites = async (exhibitorId) => {
         },
       }
     );
+    const status = response.status;
+    if (status === 204) {
+      favorites = favorites.filter((entry) => entry.id !== entryId);
+      return;
+    }
     const data = await response.json();
     checkExpired(data);
   } catch (error) {
