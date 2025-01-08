@@ -15,6 +15,13 @@ let watchlistId = null;
 let favorites = [];
 
 InforoMap.on("app/ready", async function (e) {
+  if (!token) {
+    //Do not load favorites if not logged in
+    // alert(
+    //   "Bitte loggen Sie sich ein, damit die Merkliste gespeichert werden kann."
+    // );
+    return;
+  }
   watchlistId = await getHallplanWatchlistId();
   favorites = await getFavorites(watchlistId);
   const favoritesEntryIds = favorites
@@ -69,6 +76,9 @@ const getHallplanWatchlistId = async () => {
 
 const getFavorites = async (watchlistId) => {
   let favorites = [];
+  if (!watchlistId) {
+    return favorites;
+  }
 
   try {
     const response = await fetch(
@@ -91,6 +101,9 @@ const getFavorites = async (watchlistId) => {
 };
 
 const addFavorites = async (exhibitorId) => {
+  if (!watchlistId) {
+    return;
+  }
   const object = { entity: { id: exhibitorId, type: "organization" } };
   try {
     const response = await fetch(
@@ -117,6 +130,9 @@ const addFavorites = async (exhibitorId) => {
 };
 
 const removeFavorites = async (exhibitorId) => {
+  if (!watchlistId) {
+    return;
+  }
   const entry = favorites.find(
     (entry) =>
       entry.entity.id === exhibitorId && entry.entity.type === "organization"
@@ -159,7 +175,7 @@ const checkExpired = (response) => {
 
 const reloadParent = (message) => {
   alert(message);
-  console.log("RELOAD");
+  throw new Error(message);
   // window.parent.location.reload();
 };
 
