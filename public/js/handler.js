@@ -27,7 +27,7 @@ InforoMap.on("app/ready", async function (e) {
   const favoritesEntryIds = favorites
     .filter((entry) => entry.entity.type === "organization")
     .map((entry) => entry.entity.id);
-  InforoMap.initFavorites(favoritesEntryIds);
+  InforoMap.api.initFavorites(favoritesEntryIds);
 });
 
 const getHallplanWatchlistId = async () => {
