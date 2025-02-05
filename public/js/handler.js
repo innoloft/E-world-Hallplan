@@ -135,7 +135,7 @@ const removeFavorites = async (exhibitorId) => {
   }
   const entry = favorites.find(
     (entry) =>
-      entry.entity.id === exhibitorId && entry.entity.type === "organization"
+      entry.entity.id == exhibitorId && entry.entity.type === "organization"
   );
   if (!entry) {
     return;
