@@ -82,7 +82,7 @@ const getFavorites = async (watchlistId) => {
 
   try {
     const response = await fetch(
-      API_URL + `/watchlists/${watchlistId}/entries`,
+      API_URL + `/watchlists/${watchlistId}/entries?limit=100`,
       {
         headers: {
           appId: APP_ID,
