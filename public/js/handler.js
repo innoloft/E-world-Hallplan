@@ -23,7 +23,7 @@ InforoMap.on("app/ready", async function (e) {
     return;
   }
   watchlistId = await getHallplanWatchlistId();
-  favorites = await getFavorites(watchlistId);
+  favorites = await getFavorites(watchlistId, 0);
   const favoritesEntryIds = favorites
     .filter((entry) => entry.entity.type === "organization")
     .map((entry) => entry.entity.id);
@@ -74,7 +74,8 @@ const getHallplanWatchlistId = async () => {
   }
 };
 
-const getFavorites = async (watchlistId) => {
+const getFavorites = async (watchlistId, offset) => {
+  console.log("OFFSET", offset);
   let favorites = [];
   if (!watchlistId) {
     return favorites;
@@ -82,7 +83,7 @@ const getFavorites = async (watchlistId) => {
 
   try {
     const response = await fetch(
-      API_URL + `/watchlists/${watchlistId}/entries?limit=100`,
+      API_URL + `/watchlists/${watchlistId}/entries?limit=25&offset=${offset}`,
       {
         headers: {
           appId: APP_ID,
@@ -92,6 +93,16 @@ const getFavorites = async (watchlistId) => {
     );
     const data = await response.json();
     checkExpired(data);
+    const headers = response.headers.get("amount-all");
+    if (headers > data.length + offset) {
+      const nextFavorites = await getFavorites(
+        watchlistId,
+        data.length + offset
+      );
+      favorites = data.concat(nextFavorites);
+    } else {
+      favorites = data;
+    }
     favorites = data;
   } catch (error) {
     console.error("Error fetching watchlist entries:", error);
