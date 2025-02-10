@@ -75,7 +75,6 @@ const getHallplanWatchlistId = async () => {
 };
 
 const getFavorites = async (watchlistId, offset) => {
-  console.log("OFFSET", offset);
   let favorites = [];
   if (!watchlistId) {
     return favorites;
