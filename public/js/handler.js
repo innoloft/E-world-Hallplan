@@ -103,7 +103,6 @@ const getFavorites = async (watchlistId, offset) => {
     } else {
       favorites = data;
     }
-    favorites = data;
   } catch (error) {
     console.error("Error fetching watchlist entries:", error);
   }
