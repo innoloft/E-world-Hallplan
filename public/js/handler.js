@@ -7,7 +7,8 @@ if (urlParams.get("env") === "dev") {
   API_URL = "https://testing.api.innoloft.com";
   APP_ID = "7648562";
 }
-const watchlistName = "Hallenplan (2025 - automatisch erstellt)";
+const watchlistName = "Hallenplan (2026 - automatisch erstellt)";
+const watchlistLabel = "hallplan-2026";
 
 const token = urlParams.get("token");
 
@@ -32,9 +33,10 @@ InforoMap.on("app/ready", async function (e) {
 
 const getHallplanWatchlistId = async () => {
   let watchlist;
+  let watchlists;
 
   try {
-    const response = await fetch(API_URL + "/watchlists", {
+    const response = await fetch(API_URL + `/watchlists?label=${watchlistLabel}`, {
       headers: {
         appId: APP_ID,
         Authorization: `Bearer ${token}`,
@@ -42,7 +44,17 @@ const getHallplanWatchlistId = async () => {
     });
     const data = await response.json();
     checkExpired(data);
-    watchlist = data.find((w) => w.name === watchlistName);
+    
+    //all watchlist with label
+    watchlists = data.filter((w) => w.labels && w.labels.includes(watchlistLabel));
+    if (watchlists.length > 1) {
+      console.warn(`Mehrere Watchlists mit dem Label "${watchlistLabel}" gefunden. Es wird die erste verwendet.`);
+    }
+    
+    if (watchlists.length > 0) {
+      watchlist = watchlists[0];
+    }
+
     if (watchlist) {
       return watchlist.id;
     }
@@ -64,6 +76,7 @@ const getHallplanWatchlistId = async () => {
         name: watchlistName,
         icon: "star",
         description: "Automatisch generierte Watchlist für den Hallenplan",
+        labels: [watchlistLabel]
       }),
     });
     const data = await response.json();
