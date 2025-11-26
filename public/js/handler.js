@@ -15,6 +15,22 @@ const token = urlParams.get("token");
 let watchlistId = null;
 let favorites = [];
 
+// LocalStorage key for watchlist preference
+const STORAGE_KEY = 'hallplan_watchlist_preference';
+
+// LocalStorage utility functions
+const getStoredWatchlistId = () => {
+  return localStorage.getItem(STORAGE_KEY);
+};
+
+const setStoredWatchlistId = (id) => {
+  localStorage.setItem(STORAGE_KEY, id);
+};
+
+const clearStoredWatchlistId = () => {
+  localStorage.removeItem(STORAGE_KEY);
+};
+
 InforoMap.on("app/ready", async function (e) {
   if (!token) {
     //Do not load favorites if not logged in
@@ -31,10 +47,39 @@ InforoMap.on("app/ready", async function (e) {
   InforoMap.api.initFavorites(favoritesEntryIds);
 });
 
+// Validate that a watchlist ID still exists
+const validateWatchlistId = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/watchlists/${id}`, {
+      headers: {
+        appId: APP_ID,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
+
 const getHallplanWatchlistId = async () => {
-  let watchlist;
+  // 1. Check localStorage first
+  const storedId = getStoredWatchlistId();
+  if (storedId) {
+    const isValid = await validateWatchlistId(storedId);
+    if (isValid) {
+      console.log('Using stored watchlist preference:', storedId);
+      showSettingsButton();
+      return storedId;
+    }
+    // If invalid, clear storage and continue
+    console.warn('Stored watchlist ID is invalid, clearing preference');
+    clearStoredWatchlistId();
+  }
+
   let watchlists;
 
+  // 2. Fetch watchlists with label
   try {
     const response = await fetch(API_URL + `/watchlists?label=${watchlistLabel}`, {
       headers: {
@@ -45,25 +90,28 @@ const getHallplanWatchlistId = async () => {
     const data = await response.json();
     checkExpired(data);
     
-    //all watchlist with label
+    // Filter watchlists with the label
     watchlists = data.filter((w) => w.labels && w.labels.includes(watchlistLabel));
+    
+    // 3. Handle multiple watchlists - show modal
     if (watchlists.length > 1) {
-      console.warn(`Mehrere Watchlists mit dem Label "${watchlistLabel}" gefunden. Es wird die erste verwendet.`);
+      console.log(`Found ${watchlists.length} watchlists with label "${watchlistLabel}"`);
+      const selectedId = await window.watchlistModal.show(watchlists);
+      setStoredWatchlistId(selectedId);
+      showSettingsButton();
+      return selectedId;
     }
     
-    if (watchlists.length > 0) {
-      watchlist = watchlists[0];
-    }
-
-    if (watchlist) {
-      return watchlist.id;
+    // 4. Single watchlist found
+    if (watchlists.length === 1) {
+      return watchlists[0].id;
     }
   } catch (error) {
     console.error("Error fetching watchlists:", error);
     return null;
   }
 
-  // create watchlist if it doesn't exist
+  // 5. Create watchlist if none exist
   try {
     const response = await fetch(API_URL + "/watchlists", {
       method: "POST",
@@ -203,3 +251,59 @@ const reloadParent = (message) => {
 
 window.addFavorites = addFavorites;
 window.removeFavorites = removeFavorites;
+
+
+// Settings button functionality
+const showSettingsButton = () => {
+  const settingsButton = document.getElementById('settings-button');
+  if (settingsButton) {
+    settingsButton.classList.remove('hidden');
+    // Set tooltip text based on language
+    settingsButton.setAttribute('title', window.i18n.t('settingsTooltip'));
+  }
+};
+
+const hideSettingsButton = () => {
+  const settingsButton = document.getElementById('settings-button');
+  if (settingsButton) {
+    settingsButton.classList.add('hidden');
+  }
+};
+
+// Initialize settings button event listener
+const initSettingsButton = () => {
+  const settingsButton = document.getElementById('settings-button');
+  if (settingsButton) {
+    settingsButton.addEventListener('click', async () => {
+      // Fetch watchlists and show modal with current selection
+      try {
+        const response = await fetch(API_URL + `/watchlists?label=${watchlistLabel}`, {
+          headers: {
+            appId: APP_ID,
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        checkExpired(data);
+        
+        const watchlists = data.filter((w) => w.labels && w.labels.includes(watchlistLabel));
+        
+        if (watchlists.length > 1) {
+          const currentWatchlistId = getStoredWatchlistId();
+          const selectedId = await window.watchlistModal.show(watchlists, currentWatchlistId);
+          setStoredWatchlistId(selectedId);
+          location.reload();
+        }
+      } catch (error) {
+        console.error("Error fetching watchlists:", error);
+      }
+    });
+  }
+};
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSettingsButton);
+} else {
+  initSettingsButton();
+}
