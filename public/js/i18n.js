@@ -2,7 +2,7 @@
 const translations = {
   en: {
     modalTitle: "Select Watchlist",
-    modalDescription: "Multiple watchlists found. Please select one:",
+    modalDescription: "Please select the watchlist you want to use to store your favorites. You can later check the favorites in your \"My Watchlists\" within the E-world Community.",
     selectButton: "Select",
     cancelButton: "Cancel",
     settingsTooltip: "Change Watchlist",
@@ -14,7 +14,7 @@ const translations = {
   },
   de: {
     modalTitle: "Watchliste auswählen",
-    modalDescription: "Mehrere Watchlisten gefunden. Bitte wählen Sie eine aus:",
+    modalDescription: "Bitte wähle die Watchliste aus, in der die Favoriten gespeichert werden sollen. Du kannst die Favoriten später in \"Meine Watchlists\" innerhalb der E-world Community einsehen.",
     selectButton: "Auswählen",
     cancelButton: "Abbrechen",
     settingsTooltip: "Watchliste ändern",
