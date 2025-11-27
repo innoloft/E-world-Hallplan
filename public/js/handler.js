@@ -79,9 +79,9 @@ const getHallplanWatchlistId = async () => {
 
   let watchlists;
 
-  // 2. Fetch watchlists with label
+  // 2. Fetch watchlists
   try {
-    const response = await fetch(API_URL + `/watchlists?label=${watchlistLabel}`, {
+    const response = await fetch(API_URL + `/watchlists`, {
       headers: {
         appId: APP_ID,
         Authorization: `Bearer ${token}`,
@@ -89,19 +89,25 @@ const getHallplanWatchlistId = async () => {
     });
     const data = await response.json();
     checkExpired(data);
-    
-    // Filter watchlists with the label
-    watchlists = data.filter((w) => w.labels && w.labels.includes(watchlistLabel));
-    
+
+    // Filter watchlists with the addEntry and removeEntry actions ("actions": ["edit", "share", "delete", "addEntry", "removeEntry"])
+    watchlists = data.filter(
+      (w) =>
+        w.actions &&
+        w.actions.includes("addEntry") &&
+        w.actions.includes("removeEntry")
+    );
+
+    // watchlists = data.filter((w) => w.labels && w.labels.includes(watchlistLabel));
+
     // 3. Handle multiple watchlists - show modal
     if (watchlists.length > 1) {
-      console.log(`Found ${watchlists.length} watchlists with label "${watchlistLabel}"`);
       const selectedId = await window.watchlistModal.show(watchlists);
       setStoredWatchlistId(selectedId);
       showSettingsButton();
       return selectedId;
     }
-    
+
     // 4. Single watchlist found
     if (watchlists.length === 1) {
       return watchlists[0].id;
