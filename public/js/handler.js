@@ -100,17 +100,12 @@ const getHallplanWatchlistId = async () => {
 
     // watchlists = data.filter((w) => w.labels && w.labels.includes(watchlistLabel));
 
-    // 3. Handle multiple watchlists - show modal
-    if (watchlists.length > 1) {
+    // 3. Handle watchlists found (≥1) - show modal
+    if (watchlists.length >= 1) {
       const selectedId = await window.watchlistModal.show(watchlists);
       setStoredWatchlistId(selectedId);
       showSettingsButton();
       return selectedId;
-    }
-
-    // 4. Single watchlist found
-    if (watchlists.length === 1) {
-      return watchlists[0].id;
     }
   } catch (error) {
     console.error("Error fetching watchlists:", error);
@@ -135,11 +130,43 @@ const getHallplanWatchlistId = async () => {
     });
     const data = await response.json();
     checkExpired(data);
-    return data.id || data.watchlistId;
+    const createdWatchlistId = data.id || data.watchlistId;
+    setStoredWatchlistId(createdWatchlistId);
+    showSettingsButton();
+    return createdWatchlistId;
   } catch (error) {
     console.error("Error creating watchlist:", error);
   }
 };
+
+// Create a new watchlist with the given name
+const createNewWatchlist = async (name) => {
+  try {
+    const response = await fetch(API_URL + "/watchlists", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        appId: APP_ID,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: name,
+        icon: "star",
+        description: "",
+        labels: [watchlistLabel]
+      }),
+    });
+    const data = await response.json();
+    checkExpired(data);
+    return data.id || data.watchlistId;
+  } catch (error) {
+    console.error("Error creating watchlist:", error);
+    return null;
+  }
+};
+
+// Expose callback for modal to use
+window.createWatchlistCallback = createNewWatchlist;
 
 const getFavorites = async (watchlistId, offset) => {
   let favorites = [];
@@ -283,7 +310,7 @@ const initSettingsButton = () => {
     settingsButton.addEventListener('click', async () => {
       // Fetch watchlists and show modal with current selection
       try {
-        const response = await fetch(API_URL + `/watchlists?label=${watchlistLabel}`, {
+        const response = await fetch(API_URL + `/watchlists`, {
           headers: {
             appId: APP_ID,
             Authorization: `Bearer ${token}`,
@@ -292,9 +319,15 @@ const initSettingsButton = () => {
         const data = await response.json();
         checkExpired(data);
         
-        const watchlists = data.filter((w) => w.labels && w.labels.includes(watchlistLabel));
+        // Filter watchlists with the addEntry and removeEntry actions
+        const watchlists = data.filter(
+          (w) =>
+            w.actions &&
+            w.actions.includes("addEntry") &&
+            w.actions.includes("removeEntry")
+        );
         
-        if (watchlists.length > 1) {
+        if (watchlists.length >= 1) {
           const currentWatchlistId = getStoredWatchlistId();
           const selectedId = await window.watchlistModal.show(watchlists, currentWatchlistId);
           setStoredWatchlistId(selectedId);

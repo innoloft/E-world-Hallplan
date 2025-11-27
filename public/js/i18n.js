@@ -7,7 +7,10 @@ const translations = {
     cancelButton: "Cancel",
     settingsTooltip: "Change Watchlist",
     noWatchlistsFound: "No watchlists available",
-    loadingWatchlists: "Loading watchlists..."
+    loadingWatchlists: "Loading watchlists...",
+    createNewWatchlist: "Create New Watchlist",
+    watchlistNamePlaceholder: "Enter watchlist name...",
+    createButton: "Create"
   },
   de: {
     modalTitle: "Watchliste auswählen",
@@ -16,7 +19,10 @@ const translations = {
     cancelButton: "Abbrechen",
     settingsTooltip: "Watchliste ändern",
     noWatchlistsFound: "Keine Watchlisten verfügbar",
-    loadingWatchlists: "Watchlisten werden geladen..."
+    loadingWatchlists: "Watchlisten werden geladen...",
+    createNewWatchlist: "Neue Watchliste erstellen",
+    watchlistNamePlaceholder: "Watchlisten-Name eingeben...",
+    createButton: "Erstellen"
   }
 };
 

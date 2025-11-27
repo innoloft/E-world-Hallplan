@@ -22,6 +22,9 @@ const showWatchlistModal = (watchlists, currentWatchlistId = null) => {
     // Populate watchlist list
     populateWatchlistList(watchlists, currentWatchlistId);
     
+    // Add create watchlist option
+    addCreateWatchlistOption();
+    
     // Show modal
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -115,6 +118,98 @@ const populateWatchlistList = (watchlists, currentWatchlistId = null) => {
     
     watchlistList.appendChild(item);
   });
+};
+
+// Add "Create New Watchlist" option to the modal
+const addCreateWatchlistOption = () => {
+  const watchlistList = document.getElementById('watchlist-list');
+  
+  // Create container for new watchlist form
+  const createContainer = document.createElement('div');
+  createContainer.className = 'create-watchlist-container';
+  createContainer.id = 'create-watchlist-container';
+  
+  // Create toggle button
+  const toggleButton = document.createElement('button');
+  toggleButton.className = 'create-watchlist-toggle';
+  toggleButton.type = 'button';
+  toggleButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+    </svg>
+    <span>${window.i18n.t('createNewWatchlist')}</span>
+  `;
+  
+  // Create form (initially hidden)
+  const form = document.createElement('div');
+  form.className = 'create-watchlist-form hidden';
+  form.id = 'create-watchlist-form';
+  form.innerHTML = `
+    <input
+      type="text"
+      id="new-watchlist-name"
+      class="watchlist-name-input"
+      placeholder="${window.i18n.t('watchlistNamePlaceholder')}"
+      maxlength="100"
+    />
+    <div class="create-watchlist-actions">
+      <button type="button" class="btn-create-confirm">${window.i18n.t('createButton')}</button>
+      <button type="button" class="btn-create-cancel">${window.i18n.t('cancelButton')}</button>
+    </div>
+  `;
+  
+  createContainer.appendChild(toggleButton);
+  createContainer.appendChild(form);
+  watchlistList.appendChild(createContainer);
+  
+  // Toggle form visibility
+  toggleButton.addEventListener('click', () => {
+    const isHidden = form.classList.contains('hidden');
+    form.classList.toggle('hidden');
+    if (isHidden) {
+      document.getElementById('new-watchlist-name').focus();
+    }
+  });
+  
+  // Handle form submission
+  const confirmButton = form.querySelector('.btn-create-confirm');
+  const cancelButton = form.querySelector('.btn-create-cancel');
+  const nameInput = form.querySelector('#new-watchlist-name');
+  
+  confirmButton.addEventListener('click', async () => {
+    const name = nameInput.value.trim();
+    if (name) {
+      await handleCreateWatchlist(name);
+    }
+  });
+  
+  cancelButton.addEventListener('click', () => {
+    form.classList.add('hidden');
+    nameInput.value = '';
+  });
+  
+  // Handle Enter key in input
+  nameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const name = nameInput.value.trim();
+      if (name) {
+        handleCreateWatchlist(name);
+      }
+    }
+  });
+};
+
+// Handle creating a new watchlist
+const handleCreateWatchlist = async (name) => {
+  // This will be called from modal.js but needs access to handler.js functions
+  // We'll expose a callback function from handler.js
+  if (window.createWatchlistCallback) {
+    const newWatchlistId = await window.createWatchlistCallback(name);
+    if (newWatchlistId) {
+      handleWatchlistSelection(newWatchlistId);
+    }
+  }
 };
 
 // Handle watchlist selection
